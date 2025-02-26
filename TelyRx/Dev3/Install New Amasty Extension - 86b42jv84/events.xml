@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="adminhtml_block_html_before">
+        <observer name="change_setting_link" instance="Telyrx\Prescriber\Observer\AdminhtmlBlockHtmlBefore" />
+    </event>
+    <event name="catalog_product_save_after">
+        <observer name="admin_catalog_product_save_after" instance="Telyrx\Prescriber\Observer\Product" />
+    </event>
+    <event name="telyrx_groups_save_after">
+        <observer name="telyrx_prescriber_log_group_changes" instance="Telyrx\Prescriber\Observer\LogGroupChanges" />
+    </event>
+    <event name="sales_order_load_after">
+        <observer name="Amasty_Rewards::AllowRefund" instance="Telyrx\Prescriber\Observer\OrderLoadAfter" />
+    </event>
+</config>

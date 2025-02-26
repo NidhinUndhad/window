@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/** @var \Magento\Customer\Block\Widget\Gender $block */
+?>
+<div class="field gender<?= $block->isRequired() ? ' required' : '' ?>">
+    <label class="label" for="<?= $block->escapeHtmlAttr($block->getFieldId('gender')) ?>"><span><?= $block->escapeHtml('Sex') ?></span>
+        <span class="info-icon gender-tooltip" style="display: none;">
+            <span class="tooltip-text">
+                If there is an error with your selected sex in the client portal, please contact our Customer Experience team at hello@telyrx.com. Kindly include a copy of your valid driver's license, and they will assist in correcting any mismatched information.
+            </span>
+        </span>
+
+    </label>
+    <div class="control">
+        <select id="<?= $block->escapeHtmlAttr($block->getFieldId('gender')) ?>" name="<?= $block->escapeHtmlAttr($block->getFieldName('gender')) ?>" title="<?= $block->escapeHtmlAttr($block->getStoreLabel('gender')) ?>" <?php if ($block->isRequired()) : ?> class="validate-select" data-validate="{required:true}" <?php endif; ?>>
+            <?php $options = $block->getGenderOptions(); ?>
+            <?php $value = $block->getGender(); ?>
+            <?php foreach ($options as $option) : ?>
+                <?php if ($option->getValue() == 3) {
+                    continue;
+                } ?>
+                <option value="<?= $block->escapeHtmlAttr($option->getValue()) ?>" <?= ($option->getValue() == $value) ? ' selected="selected"' : '' ?>><?= $block->escapeHtml(__($option->getLabel())) ?></option>
+            <?php endforeach; ?>
+        </select>
+        <input type="hidden"
+            class="hidden-gender-field"
+            name="<?= $block->escapeHtmlAttr($block->getFieldName('gender')) ?>"
+            value="<?= $value ?>">
+    </div>
+</div>
+
+<script type="text/javascript">
+    require(['jquery', 'mage/url'], function($, url) {
+        $(document).ready(function() {
+            var currentUrl = window.location.href;
+            if (currentUrl.indexOf('customer/account/edit') !== -1) {
+                $('#<?= $block->escapeHtmlAttr($block->getFieldId('gender')) ?>').attr('disabled', true);
+                $('.gender-tooltip').show();
+            } else {
+                $('.hidden-gender-field').remove();
+            }
+        });
+    });
+</script>

@@ -1,0 +1,410 @@
+<?php
+
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/** @var $block \Magento\Catalog\Block\Product\View */
+?>
+<?php
+$_product               = $block->getProduct();
+$buttonTitle            = __('GET SCRIPT & MEDS NOW');
+$productType            = $_product->getData('telyrx_product_type');
+$enableDoctorsNote      = $_product->getData('enable_doctors_note');
+$priceHelper            = $this->helper('Telyrx\DrsNoteProduct\Helper\Data');
+$doctorNoteProductPrice = $priceHelper->getDoctorsNoteProductPrice();
+
+$ifOtcAttributeSet = false;
+if ($_product->getAttributeSetId() == 11) {
+    $ifOtcAttributeSet = true;
+}
+$helper = $this->helper('Telyrx\HpCertification\Helper\Data');
+?>
+<?php if ($_product->isSaleable()) : ?>
+    <div class="box-tocart">
+        <div class="fieldset">
+            <?php if ($block->shouldRenderQuantity()) : ?>
+                <?php if ($ifOtcAttributeSet) : ?>
+                    <div class="field qty">
+                        <label class="label" for="qty"><span><?= $block->escapeHtml(__('Qty')) ?></span></label>
+                        <div class="control">
+                            <input type="number" name="qty" id="qty" min="0" value="<?= $block->getProductDefaultQty() * 1 ?>" title="<?= $block->escapeHtmlAttr(__('Qty')) ?>" class="input-text qty" data-validate="<?= $block->escapeHtml(json_encode($block->getQuantityValidators())) ?>" />
+                        </div>
+                    </div>
+                    <button type="submit" class="action primary tocart" id="product-addtocart-button" disabled>
+                        <span><?php echo __("Add to Cart"); ?></span>
+                    </button>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <?php if (!$ifOtcAttributeSet) : ?>
+                <div class="automatic-refill-section" style="display:none;">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" name="automatic-refill" class="automatic-refill-input" id="automatic-refill-input" value="1" />
+                        <label for="automatic-refill-input">
+                            <?php echo __("Automatically get my refill(s) from TelyRx!"); ?>
+                        </label>
+                    </div>
+                    <span class="notes"><?php echo __("We will let you know when your refill is ready to ship, and your card will be automatically charged."); ?></span>
+                </div>
+                <?php if ($enableDoctorsNote) : ?>
+                    <div class="doctors-note-section">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" name="doctors-note" class="doctors-note-input" id="doctors-note-input" value="1" />
+                            <label for="doctors-note-input">
+                                <?php echo __("Add Doctor's note for ") . $doctorNoteProductPrice; ?>
+                            </label>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <?php if ($productType == 2): ?>
+                    <div class="details-qty qty">
+                        <label class="label" for="qty"><span><?= $block->escapeHtml(__('Qty')) ?></span></label>
+                        <div class="control">
+                            <button type="button" class="decreasing-qty" title="Decrease the quantity">-</button>
+                            <input type="number" name="qty" id="qty" min="0" value="1" title="Qty" class="input-text qty" data-validate="<?= $block->escapeHtml(json_encode($block->getQuantityValidators())) ?>">
+                            <button type="button" class="increasing-qty" title="Increase the quantity">+</button>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <div class="actions product-tocart-action">
+                    <?php if ($productType != 2): ?>
+                        <input type="hidden" name="qty" id="qty" min="0" value="1" class="input-text qty" data-validate="<?= $block->escapeHtml(json_encode($block->getQuantityValidators())) ?>" />
+                    <?php endif; ?>
+                    <button type="button" title="<?= $block->escapeHtmlAttr($buttonTitle) ?>" class="action primary" id="request-prescription" />
+                    <span><?= $block->escapeHtml($buttonTitle) ?></span>
+                    </button>
+                    <button style="display:none;" type="submit" class="action primary tocart" id="product-addtocart-button1">
+                        <span><?php echo __("Continue To Checkout"); ?></span>
+                    </button>
+                    <?php /*
+                        <div class="link-wrapper">
+                            or <a href="#"><?php echo __('I have my own prescription'); ?></a>
+                        </div>
+                    */ ?>
+                    <?= $block->getChildHtml('', true) ?>
+                </div>
+                <h1 class="product-seo-tag">
+                    <span> <?php echo $_product->getData('h1_seo_tag'); ?> </span>
+                </h1>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php if (!$ifOtcAttributeSet && $productType != 2) : ?>
+        <div id="popup-modal11" class="certification-section">
+
+            <div class="head-wrapper">
+                <span class="tag"><?php echo __("H&P Certification"); ?></span>
+                <div class="image-wrapper">
+                    <img src="<?php echo $block->getViewFileUrl('images/tely-rep.png'); ?>" alt="TelyRx Logo" width="360" height="304" loading="lazy" class="large">
+                    <img src="<?php echo $block->getViewFileUrl('images/tely-rep-mobile.png'); ?>" alt="TelyRx Logo" width="430" height="308" loading="lazy" class="small">
+                </div>
+                <div class="content-wrapper">
+                    <h2 class="prescription-heading"><?php echo __("Tell us about yourself."); ?></span></h2>
+                    <p class="blurb"><?php echo __("“You need to carefully review and make sure you can agree to each statement. If there are questions, a doctor will be in touch after checkout.”"); ?></p>
+                    <img src="<?php echo $block->getViewFileUrl('images/tely-logo-xs.png'); ?>" alt="TelyRx Logo" width="96" height="32" loading="lazy">
+                </div>
+            </div>
+
+            <span class="prod-name"><?php echo $_product->getName(); ?></span>
+            <div id="terms-page" class="innerscroller-section">
+                <?php echo $helper->getAgreementTextOfProduct($_product); ?>
+                <?php if ($productType != 1): ?>
+                    <?php echo $this->getLayout()->createBlock('Magento\Cms\Block\Block')->setBlockId('hp_certification_agreement_text')->toHtml(); ?>
+                <?php endif; ?>
+            </div>
+            <div class="bottom-agree-button">
+                <div class="agree-section">
+                    <input type="checkbox" name="agree-cert" class="agree-certification" id="agree-certification" value="1" />
+                    <label for="agree-certification">
+                        <?php echo __("I agree that all statements above are true and my physician visit is complete."); ?>
+                    </label>
+                </div>
+                <input type="hidden" name="hp_certificate_date" id="hp_certificate_date" value="<?php echo $helper->getStoreDateTime(); ?>">
+                <input type="hidden" name="hp_certificate_ip" id="hp_certificate_ip" value="<?php echo $helper->getIp(); ?>">
+                <button type="submit" class="action primary tocart" id="product-addtocart-button2" disabled>
+                    <span><?php echo __("Continue To Checkout"); ?></span>
+                </button>
+                <div class="action submit primary" id="product-addtocart-button-cancel">
+                    <span><?php echo __("Cancel"); ?></span>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+    <?php if (!$ifOtcAttributeSet && $productType == 2) : ?>
+        <div id="bundle-popup-modal11" class="certification-section-bundle" style="display: none;">
+            <span class="tag"><?php echo __("H&P Certification"); ?></span>
+            <span class="prod-name"><?php echo $_product->getName(); ?></span>
+            <div id="terms-page" class="innerscroller-section">
+                <?php echo $helper->getAgreementTextOfProduct($_product); ?>
+                <?php echo $this->getLayout()->createBlock('Magento\Cms\Block\Block')->setBlockId('hp_certification_agreement_text')->toHtml(); ?>
+            </div>
+            <div class="modal-footer">
+                <div class="bottom-agree-button">
+                    <input type="hidden" name="hp_certificate_date" id="hp_certificate_date" value="<?php echo $helper->getStoreDateTime(); ?>">
+                    <input type="hidden" name="hp_certificate_ip" id="hp_certificate_ip" value="<?php echo $helper->getIp(); ?>">
+                    <button type="submit" class="action primary tocart" id="product-addtocart-button2">
+                        <span><?php echo __("Agree. Continue to Cart"); ?></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+<?php endif; ?>
+<script type="text/x-magento-init">
+    {
+        "#product_addtocart_form": {
+            "Magento_Catalog/js/validate-product": {}
+        }
+    }
+</script>
+
+<script type="text/javascript">
+    require(['jquery', 'Magento_Ui/js/lib/view/utils/async'], function($) {
+        $.async('#terms-page', function(element) {
+            $(element).children('div').each(function(e, el) {
+                $(el).replaceWith($('<p />', {
+                    html: $(this).html()
+                }));
+            });
+        });
+    });
+    require(['jquery', 'jquery/ui'], function($) {
+        jQuery(document).ready(function() {
+            var addToCartButton = $("#product-addtocart-button");
+            $(document).on("click", "#automatic-refill-input", function() {
+                $(".subscription-options").hide();
+                if ($('#automatic-refill-input').is(':checked')) {
+                    $(".subscription-opt ul li").last().find('a').trigger('click');
+                } else {
+                    $(".subscription-opt ul li.selected").removeClass("selected");
+                    $(".subscription-options select option:selected").prop("selected", false);
+                }
+            });
+
+            disabledAddToCart();
+            $(".product-options-wrapper .super-attribute-select").on("change", function() {
+                disabledAddToCart();
+            });
+
+            function disabledAddToCart() {
+                var count = 0;
+                $('.product-options-wrapper .field.configurable.required select').each(function() {
+                    var thisVal = $(this).find(":selected").val();
+                    if (thisVal === null || thisVal == '') {
+                        count++;
+                    }
+                });
+                if (count == 0) {
+                    $(".product-tocart-action").removeClass("section-disabled");
+                } else {
+                    $(".product-tocart-action").addClass("section-disabled");
+                }
+            }
+
+            var productType = <?= json_encode($productType); ?>;
+            if (productType == 2) {
+                $("#bundle-slide").hide();
+                $(".product-add-form").show();
+                $("#product-options-wrapper").removeClass("product-options-wrapper");
+                $("#instant-purchase").hide();
+                if ($('#popup-modal11').length && $('.product-options-bottom').length) {
+                    $('#popup-modal11').appendTo('.product-options-bottom');
+                }
+
+                if ($('#product_addtocart_form').length && $('.product-options-bottom').length) {
+                    $('.product-options-bottom').appendTo('#product_addtocart_form');
+                }
+
+                if ($('.details-qty').length && $('#product-options-wrapper').length) {
+                    $('.details-qty').appendTo('#product-options-wrapper');
+                }
+
+                if ($('.bundle-options-container').length && $('.product-info-main').length) {
+                    $('.bundle-options-container').appendTo('.product-info-main');
+                }
+                $('span.price-notice').hide();
+
+                $('.increasing-qty').on('click', function() {
+                    let qtyField = $(this).siblings('input.qty');
+                    let currentQty = parseInt(qtyField.val()) || 0;
+                    qtyField.val(currentQty + 1);
+                });
+
+                $('.decreasing-qty').on('click', function() {
+                    let qtyField = $(this).siblings('input.qty');
+                    let currentQty = parseInt(qtyField.val()) || 0;
+                    if (currentQty > 0) {
+                        qtyField.val(currentQty - 1);
+                    }
+                });
+            }
+        });
+    });
+</script>
+<script>
+    require([
+        'jquery'
+    ], function($) {
+        $('#popup-modal11').hide();
+        $('#request-prescription').click(function() {
+            $('#popup-modal11').show();
+            $('#popup-modal11').addClass("active");
+            if ($('#agree-certification').is(':checked')) {
+                $('#product-addtocart-button').prop('disabled', false);
+                $('#product-addtocart-button2').prop('disabled', false);
+            } else {
+                $('#product-addtocart-button').prop('disabled', true);
+                $('#product-addtocart-button2').prop('disabled', true);
+            }
+            //$('#product-addtocart-button').prop('disabled', true);
+            $('.column.main').addClass("active");
+            $('.product-category-name').addClass('custom-remove');
+            $('.page-title-wrapper.product').addClass('custom-remove');
+            $('.product-info-price').addClass('custom-remove');
+            $('.product.attribute.overview').addClass('custom-remove');
+            $('.product-options-wrapper').addClass('custom-remove');
+            $('.bullet-points').addClass('custom-remove');
+            $('.box-tocart').addClass('custom-remove');
+            $('.doctors-note-form-main').addClass('custom-remove');
+            $('.doctors-note-form-sec').addClass('custom-remove');
+            $('#product-options-wrapper').hide();
+            $('.bundle-options').hide();
+            $('#bundleSummary').hide();
+        });
+        $('#product-addtocart-button-cancel').click(function() {
+            $("html, body").animate({
+                scrollTop: 0
+            }, "slow");
+            $('#popup-modal11').removeClass("active");
+            $('.column.main').removeClass("active");
+            $('.product-category-name').removeClass('custom-remove');
+            $('.page-title-wrapper.product').removeClass('custom-remove');
+            $('.product-info-price').removeClass('custom-remove');
+            $('.product.attribute.overview').removeClass('custom-remove');
+            $('.product-options-wrapper').removeClass('custom-remove');
+            $('.bullet-points').removeClass('custom-remove');
+            $('.box-tocart').removeClass('custom-remove');
+            $('.doctors-note-form-main').removeClass('custom-remove');
+            $('.doctors-note-form-sec').removeClass('custom-remove');
+            $('#product-options-wrapper').show();
+            $('.bundle-options').show();
+            $('#bundleSummary').show();
+        });
+        if ($('#agree-certification').is(':checked')) {
+            $('#product-addtocart-button2').prop('disabled', false);
+        } else {
+            $('#product-addtocart-button2').prop('disabled', true);
+        }
+        $('#doctors-note-input').change(function() {
+            if ($('#doctors-note-input').is(':checked')) {
+                $('.action.primary.tocart span').text('Get Doctor’s Note');
+            }
+        });
+    });
+</script>
+<script>
+    require(['jquery', 'Magento_Ui/js/lib/view/utils/async'], function($) {
+        $.async('#product-addtocart-button', function(element) {
+            $(element).click(function() {
+                $('#product-addtocart-button1').trigger('click');
+                $('body').trigger('processStart');
+            });
+        });
+    });
+    require(['jquery', 'Magento_Ui/js/lib/view/utils/async'], function($) {
+        $.async('#agree-certification', function(element) {
+            $(element).change(function() {
+                if ($(this).is(':checked')) {
+                    $('#product-addtocart-button').prop('disabled', false);
+                    $('#product-addtocart-button2').prop('disabled', false);
+                } else {
+                    $('#product-addtocart-button').prop('disabled', true);
+                    $('#product-addtocart-button2').prop('disabled', true);
+                }
+            });
+        });
+    });
+    /*require(['jquery','Magento_Ui/js/lib/view/utils/async'], function($){
+        $.async('#automatic-refill-input', function (element) { 
+            $(element).prop("checked", true).trigger("change");
+        });
+        setTimeout(function() {
+            //$('.subscription-main .subscription-opt a').trigger('click');
+            $(".subscription-main .subscription-opt ul li").last().find('a').trigger('click');
+        }, 5000);
+    });*/
+</script>
+
+<script type="text/javascript">
+    require([
+        "jquery",
+        "Magento_Ui/js/modal/modal"
+    ], function($, modal) {
+        var productType = <?= json_encode($productType); ?>;
+        if (productType == 2) {
+            var mainPopup = $('#bundle-popup-modal11');
+            mainPopup.modal({
+                type: 'popup',
+                responsive: true,
+                innerScroll: true,
+                modalClass: 'certification-section-bundle',
+                buttons: []
+            });
+
+            $('#request-prescription').on('click', function() {
+                mainPopup.modal('openModal');
+                $('.certification-section-bundle .tag').prependTo('.modal-header');
+                var footers = $('.modal-inner-wrap .modal-footer');
+                if (footers.length === 0) {
+                    $('.modal-footer').appendTo('.modal-inner-wrap');
+                }
+                $('#product-addtocart-button2').prop('disabled', true);
+
+                $('.modal-content').on('scroll', function() {
+                    var scrollHeight = $(this)[0].scrollHeight;
+                    var scrollTop = $(this).scrollTop();
+                    var innerHeight = $(this).innerHeight();
+
+                    if (scrollTop + innerHeight >= scrollHeight - 1) {
+                        $('#product-addtocart-button2').prop('disabled', false);
+                    } else {
+                        $('#product-addtocart-button2').prop('disabled', true);
+                    }
+                });
+
+                $('#product-addtocart-button2').on('click', function(e) {
+                    e.preventDefault();
+                    setTimeout(function() {
+                        $('#product_addtocart_form').submit();
+                    }, 100);
+                });
+
+                $(document).on("click", ".certification-section-bundle .action-close", function() {
+                    mainPopup.modal("closeModal");
+                    setTimeout(function() {
+                        $("html, body").animate({
+                            scrollTop: 0
+                        }, "slow");
+
+                        $('.column.main').removeClass("active");
+                        $('.product-category-name').removeClass('custom-remove');
+                        $('.page-title-wrapper.product').removeClass('custom-remove');
+                        $('.product-info-price').removeClass('custom-remove');
+                        $('.product.attribute.overview').removeClass('custom-remove');
+                        $('.product-options-wrapper').removeClass('custom-remove');
+                        $('.bullet-points').removeClass('custom-remove');
+                        $('.box-tocart').removeClass('custom-remove');
+                        $('.doctors-note-form-main').removeClass('custom-remove');
+                        $('.doctors-note-form-sec').removeClass('custom-remove');
+                        $('#product-options-wrapper').show();
+                        $('.bundle-options').show();
+                        $('#bundleSummary').show();
+                    }, 300);
+                });
+
+            });
+        }
+    });
+</script>
