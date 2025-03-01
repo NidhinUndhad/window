@@ -1,0 +1,249 @@
+<?php
+
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/**
+ * @var \Magento\Sales\Block\Order\Item\Renderer\DefaultRenderer $block
+ * @var \Magento\Framework\Locale\LocaleFormatter $localeFormatter
+ */
+$_item = $block->getItem();
+
+$viewModel = $block->getViewModel();
+$availableShippingMethods = [];
+$isSubscriptionItem       = false;
+$isAvailableRefillForItem = false;
+
+if ($viewModel) {
+    $availableShippingMethods = $viewModel->getAvailableShippingMethods();
+    $isSubscriptionItem       = $viewModel->isSubscriptionItem($_item);
+    $isAvailableRefillForItem = $viewModel->isAvailableRefillForItem($_item);
+}
+
+$helper = $this->helper('Telyrx\Customization\Helper\Data');
+$productLoad = $this->helper('Telyrx\Prescriber\Helper\Group');
+$resultSubscription = $helper->getOrdrIncrementId($_item['order_id']);
+$subscription_intervals = "";
+$subscription_length = 0;
+if ($resultSubscription > 0) {
+    if (isset($_item->getProductOptions()['info_buyRequest']['selected_configurable_option'])) {
+        $simpleProductId = $_item->getProductOptions()['info_buyRequest']['selected_configurable_option'];
+        $simpleProduct    =   $productLoad->loadProduct($simpleProductId);
+        $subscription_intervals  =   $simpleProduct->getResource()->getAttribute('subscription_intervals')->getFrontend()->getValue($simpleProduct);
+        $subscription_length  =   $simpleProduct->getResource()->getAttribute('subscription_length')->getFrontend()->getValue($simpleProduct);
+    }
+}
+
+$refillRequested = $_item->getData('refill_requested');
+$selectedShippingMethod = '';
+
+if ($refillRequested) {
+    $selectedShippingMethod = $_item->getData('refill_requested_shipping_method');
+}
+
+?>
+<tr id="order-item-row-<?= (int) $_item->getId() ?>">
+    <td class="col name" data-th="<?= $block->escapeHtml(__('Product Name')) ?>">
+        <strong class="product name product-item-name"><?= $block->escapeHtml($_item->getName()) ?></strong>
+        <?php if ($_options = $block->getItemOptions()): ?>
+            <dl class="item-options">
+                <?php foreach ($_options as $_option): ?>
+                    <?php if ($_option['label'] == 'Subscription') { ?>
+                        <dt><?= $block->escapeHtml('Refills') ?></dt>
+                    <?php } elseif ($_option['label'] == 'Select Dosage') { ?>
+                        <dt><?= $block->escapeHtml('Dosage') ?></dt>
+                    <?php } else { ?>
+                        <dt><?= $block->escapeHtml($_option['label']) ?></dt>
+                    <?php } ?>
+                    <?php if (!$block->getPrintStatus()): ?>
+                        <?php $_formatedOptionValue = $block->getFormatedOptionValue($_option) ?>
+
+                        <?php if ($_item->getProductType() == "configurable") { ?>
+                            <?php if ($_option['label'] == 'Subscription') { ?>
+                                <dd>Every <?php echo $subscription_intervals; ?> days for <?php echo $subscription_length; ?> installments</dd>
+                            <?php } else { ?>
+                                <dd<?= (isset($_formatedOptionValue['full_view']) ? ' class="tooltip wrapper"' : '') ?>>
+                                    <?= $block->escapeHtml($_formatedOptionValue['value'], ['a']) ?>
+                                    <?php if (isset($_formatedOptionValue['full_view'])): ?>
+                                        <div class="tooltip content">
+                                            <dl class="item options">
+                                                <dt><?= $block->escapeHtml($_option['label']) ?></dt>
+                                                <dd><?= $block->escapeHtml($_formatedOptionValue['full_view']) ?></dd>
+                                            </dl>
+                                        </div>
+                                    <?php endif; ?>
+                                    </dd>
+                                <?php } ?>
+                            <?php } else { ?>
+                                <dd<?= (isset($_formatedOptionValue['full_view']) ? ' class="tooltip wrapper"' : '') ?>>
+                                    <?= $block->escapeHtml($_formatedOptionValue['value'], ['a']) ?>
+                                    <?php if (isset($_formatedOptionValue['full_view'])): ?>
+                                        <div class="tooltip content">
+                                            <dl class="item options">
+                                                <dt><?= $block->escapeHtml($_option['label']) ?></dt>
+                                                <dd><?= $block->escapeHtml($_formatedOptionValue['full_view']) ?></dd>
+                                            </dl>
+                                        </div>
+                                    <?php endif; ?>
+                                    </dd>
+                                <?php } ?>
+                            <?php else: ?>
+                                <?php $optionValue = isset($_option['print_value']) ? $_option['print_value'] : $_option['value'] ?>
+                                <dd><?= $block->escapeHtml($optionValue) ?></dd>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+            </dl>
+        <?php endif; ?>
+        <?php $addtInfoBlock = $block->getProductAdditionalInformationBlock(); ?>
+        <?php if ($addtInfoBlock): ?>
+            <?= $addtInfoBlock->setItem($_item)->toHtml() ?>
+        <?php endif; ?>
+        <?= $block->escapeHtml($_item->getDescription()) ?>
+    </td>
+    <td class="col sku" data-th="<?= $block->escapeHtml(__('SKU')) ?>">
+        <?= /* @noEscape */ $block->prepareSku($block->getSku()) ?>
+    </td>
+    <td class="col price" data-th="<?= $block->escapeHtml(__('Price')) ?>">
+        <?= $block->getItemPriceHtml() ?>
+    </td>
+    <td class="col qty" data-th="<?= $block->escapeHtml(__('Qty')) ?>">
+        <ul class="items-qty">
+            <?php if ($block->getItem()->getQtyOrdered() > 0): ?>
+                <li class="item">
+                    <span class="title"><?= $block->escapeHtml(__('Ordered')) ?></span>
+                    <span class="content">
+                        <?= $block->escapeHtml($localeFormatter->formatNumber((float) $block->getItem()->getQtyOrdered())) ?>
+                    </span>
+                </li>
+            <?php endif; ?>
+            <?php if ($block->getItem()->getQtyShipped() > 0): ?>
+                <li class="item">
+                    <span class="title"><?= $block->escapeHtml(__('Shipped')) ?></span>
+                    <span class="content">
+                        <?= $block->escapeHtml($localeFormatter->formatNumber((float) $block->getItem()->getQtyShipped())) ?>
+                    </span>
+                </li>
+            <?php endif; ?>
+            <?php if ($block->getItem()->getQtyCanceled() > 0): ?>
+                <li class="item">
+                    <span class="title"><?= $block->escapeHtml(__('Canceled')) ?></span>
+                    <span class="content">
+                        <?= $block->escapeHtml(
+                            $localeFormatter->formatNumber((float) $block->getItem()->getQtyCanceled())
+                        ) ?>
+                    </span>
+                </li>
+            <?php endif; ?>
+            <?php if ($block->getItem()->getQtyRefunded() > 0): ?>
+                <li class="item">
+                    <span class="title"><?= $block->escapeHtml(__('Refunded')) ?></span>
+                    <span class="content">
+                        <?= $block->escapeHtml(
+                            $localeFormatter->formatNumber((float) $block->getItem()->getQtyRefunded())
+                        ) ?>
+                    </span>
+                </li>
+            <?php endif; ?>
+        </ul>
+    </td>
+    <td class="col subtotal" data-th="<?= $block->escapeHtml(__('Subtotal')) ?>">
+        <?= $block->getItemRowTotalHtml() ?>
+    </td>
+    <?php if ($isSubscriptionItem): ?>
+        <td class="col shipping" data-th="<?= $block->escapeHtml(__('Shipping')) ?>">
+            <?php if (!empty($availableShippingMethods)) : ?>
+                <select name="shipping_method_<?= $_item->getId() ?>" class="shipping-method-dropdown">
+                    <?php foreach ($availableShippingMethods as $method) : ?>
+                        <option value="<?= $block->escapeHtml($method['value']) ?>"
+                            <?= $method['value'] === $selectedShippingMethod ? 'selected' : '' ?>>
+                            <?= $block->escapeHtml($method['label']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            <?php else : ?>
+                <select name="shipping_method_<?= $_item->getId() ?>" class="shipping-method-dropdown">
+                    <option value=""><?= __('No available shipping methods') ?></option>
+                </select>
+            <?php endif; ?>
+        </td>
+        <td class="col refill" data-th="<?= $block->escapeHtml(__('Refill')) ?>">
+            <?php if ($isAvailableRefillForItem): ?>
+                <?php if ($refillRequested): ?>
+                    <button class="action refill-btn disabled" data-item-id="<?= $_item->getId() ?>" aria-disabled="true">
+                        <?= $block->escapeHtml(__('Refill Requested')) ?>
+                    </button>
+                    <p class="refill-message">
+                        <?= $block->escapeHtml(__('Requested this refill by mistake? No problem! Contact us at ')) ?>
+                        <strong><a href="mailto:hello@telyrx.com">hello@telyrx.com</a></strong>
+                        <?= $block->escapeHtml(__(' to cancel your refill request.')) ?>
+                    </p>
+                <?php else: ?>
+                    <button class="action refill-btn" data-item-id="<?= $_item->getId() ?>">
+                        <?= $block->escapeHtml(__('Refill')) ?>
+                    </button>
+                <?php endif; ?>
+            <?php else: ?>
+                <button class="action refill-btn disabled" data-item-id="<?= $_item->getId() ?>" aria-disabled="true">
+                    <?= $block->escapeHtml(__('No Refills Left')) ?>
+                </button>
+            <?php endif; ?>
+        </td>
+
+    <?php endif; ?>
+</tr>
+<script type="text/javascript">
+    require(['jquery', 'mage/url'], function($, urlBuilder) {
+        $(document).ready(function() {
+
+            if ($('.shipping-method-dropdown').length === 0) {
+                $('.col.shipping').remove();
+                $('.col.refill').remove();
+            }
+
+            $(".refill-btn").click(function() {
+                if ($(this).data('item-id') && $(this).data('item-id') != "") {
+                    var $button = $(this);
+
+                    if ($button.data('processing')) {
+                        return;
+                    }
+                    $button.data('processing', true);
+
+                    var itemId = $(this).data('item-id');
+                    var selectedShippingMethod = $('select[name="shipping_method_' + itemId + '"]').val();
+                    var selectedShippingMethodLabel = $('select[name="shipping_method_' + itemId + '"] option:selected').text();
+                    var currentUrl = window.location.href;
+                    var orderIdMatch = currentUrl.match(/order_id\/(\d+)/);
+                    var orderId = orderIdMatch ? orderIdMatch[1] : null;
+
+                    if (!itemId || !selectedShippingMethod || !orderId) {
+                        alert('Looks like page not loaded properly. Could you please refresh the page');
+                        return;
+                    }
+
+                    $.ajax({
+                        url: urlBuilder.build('visitor/refill/submit'),
+                        type: 'POST',
+                        data: {
+                            item_id: itemId,
+                            shipping_method: selectedShippingMethod,
+                            shipping_method_label: selectedShippingMethodLabel,
+                            order_id: orderId
+                        },
+                        showLoader: true,
+                        success: function(response) {
+                            if (response.success) {
+                                location.reload();
+                            }
+                        },
+                        complete: function() {
+                            $button.data('processing', false);
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
