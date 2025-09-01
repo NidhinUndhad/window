@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Telyrx. All rights reserved.
+ */
+-->
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="salesrule" resource="default" engine="innodb" comment="Sales Rule">
+        <column xsi:type="text" name="omitted_conditions_serialized" nullable="true" comment="Omitted Conditions Serialized"/>
+    </table>
+</schema>
