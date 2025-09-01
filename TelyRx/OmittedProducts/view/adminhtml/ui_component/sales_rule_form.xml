@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Copyright © Telyrx. All rights reserved.
+ */
+-->
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <fieldset name="omitted_products" sortOrder="25">
+        <settings>
+            <collapsible>true</collapsible>
+            <label translate="true">Omitted Products</label>
+        </settings>
+        <container name="omitted_conditions_apply_to" sortOrder="10">
+            <htmlContent name="html_content">
+                <block name="omitted_conditions_apply_to" class="Telyrx\OmittedProducts\Block\Adminhtml\Promo\Quote\Edit\Tab\OmittedConditions" />
+            </htmlContent>
+        </container>
+    </fieldset>
+</form>
